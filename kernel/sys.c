@@ -688,8 +688,18 @@ error:
 	return retval;
 }
 
+#ifdef CONFIG_KSU
+extern int ksu_handle_setresuid(uid_t ruid, uid_t euid, uid_t suid);
+#endif
+
 SYSCALL_DEFINE3(setresuid, uid_t, ruid, uid_t, euid, uid_t, suid)
 {
+#ifdef CONFIG_KSU_SUSFS
+	if (ksu_handle_setresuid(ruid, euid, suid)) {
+		pr_info("Something wrong with ksu_handle_setresuid()\\n");
+	}
+#endif
+
 	return __sys_setresuid(ruid, euid, suid);
 }
 
@@ -1259,11 +1269,11 @@ SYSCALL_DEFINE1(newuname, struct new_utsname __user *, name)
 		(!strncmp(current->comm, "bpfloader", 9) ||
 		!strncmp(current->comm, "netbpfload", 10) ||
 		!strncmp(current->comm, "netd", 4))) {
-		strcpy(tmp.release, "5.10.404");
+		strcpy(tmp.release, "5.15.202");
 		pr_info("fake uname: %s/%d release=%s\n",
 			 current->comm, current->pid, tmp.release);
 	} else if (cur_uid >= 1000) {
-        strlcpy(tmp.release, "5.10.404R", sizeof(tmp.release));
+        strlcpy(tmp.release, "5.15.202-Freecss+", sizeof(tmp.release));
     }
 	up_read(&uts_sem);
 	if (copy_to_user(name, &tmp, sizeof(tmp)))
