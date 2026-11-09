@@ -5,8 +5,8 @@ set -o pipefail
 
 export ARCH=arm64
 export SUBARCH=arm64
-export KBUILD_BUILD_USER="Project113"
-export KBUILD_BUILD_HOST="Workstation"
+export KBUILD_BUILD_USER="vq6oon"
+export KBUILD_BUILD_HOST="iwakura"
 
 # Directories
 KERNEL_DIR="$PWD"
