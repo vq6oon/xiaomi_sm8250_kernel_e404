@@ -1274,22 +1274,20 @@ SYSCALL_DEFINE1(newuname, struct new_utsname __user *, name)
 	down_read(&uts_sem);
 	memcpy(&tmp, utsname(), sizeof(tmp));
 	if (cur_uid == 0 &&
-		(!strncmp(current->comm, "bpfloader", 9) ||
-		!strncmp(current->comm, "netbpfload", 10) ||
-		!strncmp(current->comm, "uprobestats", 11) ||
-		!strncmp(current->comm, "netd", 4))) {
-		strcpy(tmp.release, "5.15.197");
+	    (!strncmp(current->comm, "bpfloader", 9) ||
+	     !strncmp(current->comm, "netbpfload", 10) ||
+	     !strncmp(current->comm, "uprobestats", 11) ||
+	     !strncmp(current->comm, "netd", 4))) {
+		strcpy(tmp.release, "5.15.404");
 		pr_info("fake uname: %s/%d release=%s\n",
-			 current->comm, current->pid, tmp.release);
-	} else if (cur_uid >= 1000 ||
-		!strcmp(current->comm, "main")) {
-        strlcpy(tmp.release, "5.15.197-android13-8-00017-g6a42d5ffa908-ab15936251", sizeof(tmp.release));
-    }
+			current->comm, current->pid, tmp.release);
+	}
 #ifdef CONFIG_KSU_SUSFS_SPOOF_UNAME
 	if (static_branch_likely(&susfs_is_uname_spoof_buffer_set))
 		susfs_spoof_uname(&tmp);
 #endif
 	up_read(&uts_sem);
+
 	if (copy_to_user(name, &tmp, sizeof(tmp)))
 		return -EFAULT;
 
