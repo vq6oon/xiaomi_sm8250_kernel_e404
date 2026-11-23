@@ -166,16 +166,30 @@ for arg in "$@"; do
     done
 done
 
+JOBS=$(nproc)
+(( JOBS > 4 )) && JOBS=4
+
+generate_uapi_headers() {
+    make -C "$KERNEL_DIR" -f "$KERNEL_DIR/scripts/Makefile.asm-generic" \
+        srctree="$KERNEL_DIR" SRCARCH=arm64 \
+        src=uapi/asm obj="$OUT_DIR/arch/arm64/include/generated/uapi/asm" || return 1
+}
+
 compilebuild() {
+    generate_uapi_headers || return 1
     if [[ $TC == *Clang* ]]; then
-        make -j$(nproc) O=out \
+        make O=out CC="ccache clang" CROSS_COMPILE=aarch64-linux-gnu- \
+            CROSS_COMPILE_COMPAT=arm-linux-gnueabi- LLVM=1 LLVM_IAS=1 prepare || return 1
+        make -j$JOBS O=out \
             CC="ccache clang" \
             CROSS_COMPILE=aarch64-linux-gnu- \
             CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
             LLVM=1 LLVM_IAS=1 \
             2>&1 | tee -a "$LOG_FILE"
     else
-        make -j$(nproc) O=out \
+        make O=out CC="ccache aarch64-linux-gcc" CROSS_COMPILE=aarch64-linux- \
+            CROSS_COMPILE_COMPAT=arm-linux-gnueabi- prepare || return 1
+        make -j$JOBS O=out \
             CC="ccache aarch64-linux-gcc" \
             CROSS_COMPILE=aarch64-linux- \
             CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
