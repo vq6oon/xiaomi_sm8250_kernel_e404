@@ -125,6 +125,7 @@ void tcp_rate_gen(struct sock *sk, u32 delivered, u32 lost,
 
 	rs->acked_sacked = delivered;	/* freshly ACKed or SACKed */
 	rs->losses = lost;		/* freshly marked lost */
+	rs->lost = lost;		/* freshly marked lost (BBRv3) */
 	/* Return an invalid sample if no timing information is available or
 	 * in recovery from loss with SACK reneging. Rate samples taken during
 	 * a SACK reneging event may overestimate bw by including packets that
@@ -195,3 +196,40 @@ void tcp_rate_check_app_limited(struct sock *sk)
 			(tp->delivered + tcp_packets_in_flight(tp)) ? : 1;
 }
 EXPORT_SYMBOL_GPL(tcp_rate_check_app_limited);
+
+void tcp_set_tx_in_flight(struct sock *sk, struct sk_buff *skb)
+{
+	/* No-op: we don't store in_flight in skb_cb on 4.19 */
+}
+
+bool tcp_skb_tx_in_flight_is_suspicious(u16 pcount, u32 in_flight)
+{
+	return pcount > in_flight;
+}
+EXPORT_SYMBOL_GPL(tcp_skb_tx_in_flight_is_suspicious);
+
+u32 tcp_snd_cwnd(const struct tcp_sock *tp)
+{
+	return tp->snd_cwnd;
+}
+EXPORT_SYMBOL_GPL(tcp_snd_cwnd);
+
+void tcp_snd_cwnd_set(struct tcp_sock *tp, u32 cwnd)
+{
+	tp->snd_cwnd = cwnd;
+}
+EXPORT_SYMBOL_GPL(tcp_snd_cwnd_set);
+
+/* PLB stubs - no-op for now */
+void tcp_plb_init(struct sock *sk) {}
+EXPORT_SYMBOL_GPL(tcp_plb_init);
+void tcp_plb_release(struct sock *sk) {}
+EXPORT_SYMBOL_GPL(tcp_plb_release);
+void tcp_plb_cong_event(struct sock *sk, enum tcp_ca_event ev) {}
+EXPORT_SYMBOL_GPL(tcp_plb_cong_event);
+int tcp_plb_get_info(struct sock *sk, u32 ext, int *attr,
+		     union tcp_cc_info *info)
+{
+	return 0;
+}
+EXPORT_SYMBOL_GPL(tcp_plb_get_info);
